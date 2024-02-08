@@ -9,6 +9,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.sektor.shoppinglist.R
 import com.sektor.shoppinglist.databinding.ActivityMainBinding
 import com.sektor.shoppinglist.domain.ShopItem
+import javax.inject.Inject
 
 class MainActivity : AppCompatActivity() {
 
@@ -16,12 +17,20 @@ class MainActivity : AppCompatActivity() {
     private lateinit var shopListAdapter: ShopListAdapter
     private lateinit var binding: ActivityMainBinding
 
+    @Inject
+    lateinit var viewModelFactory: ViewModelFactory
+
+    private val component by lazy {
+        (application as ShopApp).component
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
+        component.inject(this)
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         setupRecyclerView()
-        viewModel = ViewModelProvider(this)[MainViewModel::class.java]
+        viewModel = ViewModelProvider(this, viewModelFactory)[MainViewModel::class.java]
 
         viewModel.shopListLD.observe(this) {
             shopListAdapter.shopItemList = it

@@ -1,16 +1,15 @@
 package com.sektor.shoppinglist.data
 
-import android.app.Application
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MediatorLiveData
-import androidx.lifecycle.switchMap
 import com.sektor.shoppinglist.domain.ShopItem
 import com.sektor.shoppinglist.domain.ShopListRepository
+import javax.inject.Inject
 
-class ShopListRepositoryImpl(application: Application) : ShopListRepository {
-
-    private val shopListDao = AppDatabase.getInstance(application).shopListDao()
-    private val shopListMapper = ShopListMapper()
+class ShopListRepositoryImpl @Inject constructor(
+    private val shopListDao: ShopListDao,
+    private val shopListMapper: ShopListMapper
+) : ShopListRepository {
 
     override suspend fun addShopItem(shopItem: ShopItem) {
         shopListDao.addShopItem(shopListMapper.mapEntityToDbModel(shopItem))
@@ -29,9 +28,10 @@ class ShopListRepositoryImpl(application: Application) : ShopListRepository {
         return shopListMapper.mapDbModelToEntity(dbModel)
     }
 
-    override fun getShopList(): LiveData<List<ShopItem>> = MediatorLiveData<List<ShopItem>>().apply {
-        addSource(shopListDao.getShopList()) {
-            value = shopListMapper.mapListDbModelToListEntity(it)
+    override fun getShopList(): LiveData<List<ShopItem>> =
+        MediatorLiveData<List<ShopItem>>().apply {
+            addSource(shopListDao.getShopList()) {
+                value = shopListMapper.mapListDbModelToListEntity(it)
+            }
         }
-    }
 }
