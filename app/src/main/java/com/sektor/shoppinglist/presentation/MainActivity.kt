@@ -1,6 +1,8 @@
 package com.sektor.shoppinglist.presentation
 
+import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
@@ -10,6 +12,7 @@ import com.sektor.shoppinglist.R
 import com.sektor.shoppinglist.databinding.ActivityMainBinding
 import com.sektor.shoppinglist.domain.ShopItem
 import javax.inject.Inject
+import kotlin.concurrent.thread
 
 class MainActivity : AppCompatActivity() {
 
@@ -43,6 +46,24 @@ class MainActivity : AppCompatActivity() {
             } else {
                 launchFragment(ShopItemFragment.newInstanceAddItem())
             }
+        }
+        thread {
+            val cursor = contentResolver.query(
+                Uri.parse("content://com.sektor.shoppinglist/shop_items/fgd"),
+                null,
+                null,
+                null,
+                null
+            )
+            while (cursor?.moveToNext() == true) {
+                val id = cursor.getInt(cursor.getColumnIndexOrThrow("id"))
+                val name = cursor.getString(cursor.getColumnIndexOrThrow("name"))
+                val count = cursor.getInt(cursor.getColumnIndexOrThrow("count"))
+                val enabled = cursor.getInt(cursor.getColumnIndexOrThrow("enabled")) > 0
+                val shopItem = ShopItem(id = id, name = name, count = count, enabled = enabled)
+                Log.d("MainActivity", shopItem.toString())
+            }
+            cursor?.close()
         }
     }
 
@@ -78,7 +99,14 @@ class MainActivity : AppCompatActivity() {
 
             override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
                 val item = shopListAdapter.shopItemList[viewHolder.adapterPosition]
-                viewModel.deleteShopItem(item)
+                //viewModel.deleteShopItem(item)
+                thread {
+                    contentResolver.delete(
+                        Uri.parse("content://com.sektor.shoppinglist/shop_items/fgd"),
+                        null,
+                        arrayOf(item.id.toString())
+                    )
+                }
             }
         }
         val itemTouchHelper = ItemTouchHelper(callback)
